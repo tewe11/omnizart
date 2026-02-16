@@ -8,6 +8,7 @@ import uuid
 import concurrent.futures
 import importlib
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures.process import BrokenProcessPool
 
 import jsonschema
 import pretty_midi
@@ -231,6 +232,13 @@ def ensure_path_exists(path):
         os.makedirs(path)
 
 
+def _sequential_generator(func, input_list, **kwargs):
+    """Fallback sequential execution when parallel processing fails."""
+    for idx, _input in enumerate(input_list):
+        logger.debug("Sequential job running %s", func.__name__)
+        yield func(_input, **kwargs), idx
+
+
 def parallel_generator(func, input_list, max_workers=2, use_thread=False, chunk_size=None, timeout=600, **kwargs):
     if chunk_size is not None and max_workers > chunk_size:
         logger.warning(
@@ -240,8 +248,7 @@ def parallel_generator(func, input_list, max_workers=2, use_thread=False, chunk_
         )
         max_workers = chunk_size
 
-    executor = ThreadPoolExecutor(max_workers=max_workers) \
-        if use_thread else ProcessPoolExecutor(max_workers=max_workers)
+    executor_class = ThreadPoolExecutor if use_thread else ProcessPoolExecutor
 
     chunks = 1
     slice_len = len(input_list)
@@ -251,28 +258,34 @@ def parallel_generator(func, input_list, max_workers=2, use_thread=False, chunk_
             chunks = int(chunks) + 1
         slice_len = chunk_size
 
-    for chunk_idx in range(int(chunks)):
-        start_idx = chunk_idx * slice_len
-        end_idx = (chunk_idx + 1) * slice_len
-        future_to_input = {}
-        for idx, _input in enumerate(input_list[start_idx:end_idx]):
-            logger.debug("Parallel job submitted %s", func.__name__)
-            future = executor.submit(func, _input, **kwargs)
-            future_to_input[future] = idx + start_idx
+    try:
+        with executor_class(max_workers=max_workers) as executor:
+            for chunk_idx in range(int(chunks)):
+                start_idx = chunk_idx * slice_len
+                end_idx = (chunk_idx + 1) * slice_len
+                future_to_input = {}
+                for idx, _input in enumerate(input_list[start_idx:end_idx]):
+                    logger.debug("Parallel job submitted %s", func.__name__)
+                    future = executor.submit(func, _input, **kwargs)
+                    future_to_input[future] = idx + start_idx
 
-        try:
-            for future in concurrent.futures.as_completed(future_to_input, timeout=timeout):
-                logger.debug("Yielded %s", func.__name__)
-                yield future.result(), future_to_input[future]
-        except KeyboardInterrupt as exp:
-            for future in future_to_input:
-                if future.cancel():
-                    logger.info("Job cancelled")
-                else:
-                    logger.warning("Fail to cancel job: %s", future)
-            executor.shutdown()
-            raise exp
-    executor.shutdown()
+                try:
+                    for future in concurrent.futures.as_completed(future_to_input, timeout=timeout):
+                        logger.debug("Yielded %s", func.__name__)
+                        yield future.result(), future_to_input[future]
+                except KeyboardInterrupt as exp:
+                    for future in future_to_input:
+                        if future.cancel():
+                            logger.info("Job cancelled")
+                        else:
+                            logger.warning("Fail to cancel job: %s", future)
+                    raise exp
+    except BrokenProcessPool:
+        logger.warning(
+            "Process pool crashed. Falling back to sequential execution. "
+            "This may be caused by insufficient memory or pickling errors."
+        )
+        yield from _sequential_generator(func, input_list, **kwargs)
 
 
 def synth_midi(midi_path, output_path, sampling_rate=44100, sf2_path=SOUNDFONT_PATH):
