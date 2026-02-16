@@ -1,9 +1,10 @@
-FROM tensorflow/tensorflow:2.5.0-gpu
+FROM tensorflow/tensorflow:2.5.0
 
 WORKDIR /tmp
 
-RUN apt-get update
-RUN apt-get install --assume-yes libsndfile1 libgl1-mesa-glx ffmpeg vim fluidsynth
+RUN apt-get update && \
+    apt-get install --assume-yes --fix-missing \
+    libsndfile1 libgl1 ffmpeg vim fluidsynth
 
 COPY omnizart ./omnizart
 COPY scripts ./scripts

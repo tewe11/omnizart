@@ -12,7 +12,7 @@ BUILDDIR      = build
 install:
 ifeq (, $(shell which sphinx-apidoc))
 	$(info Installing sphinx for building documents)
-	@pip install -U sphinx
+	@pip install -U sphinx --break-system-packages
 endif
 
 

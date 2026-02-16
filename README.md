@@ -39,6 +39,8 @@ omnizart music transcribe <path/to/audio.wav>
 ```
 docker pull mctlab/omnizart:latest
 docker run -it mctlab/omnizart:latest bash
+
+docker compose exec omnizart omnizart music transcribe /home/data/Blue-Ridge-Mountin-Trot-BT@MM88.wav
 ```
 
 # Supported applications

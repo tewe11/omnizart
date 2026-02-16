@@ -1,0 +1,7 @@
+services:
+  omnizart:
+    build: .
+    volumes:
+      - ./data:/home/data
+    stdin_open: true
+    tty: true
