@@ -34,10 +34,12 @@ jsonschema = ">=3.2.0"
 tqdm = ">=4.49.0"
 pyfluidsynth = ">=1.2.5"
 vamp = ">=1.1.0"
-spleeter = ">=2.3.0"
 mir_eval = ">=0.6"
 tensorflow = ">=2.16"
 tf-keras = ">=2.16"
+
+[tool.poetry.extras]
+spleeter = ["spleeter"]
 
 [tool.poetry.dev-dependencies]
 pytest = ">=7.0"
