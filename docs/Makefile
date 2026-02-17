@@ -10,9 +10,9 @@ BUILDDIR      = build
 
 
 install:
-ifeq (, $(shell which sphinx-apidoc))
-	$(info Installing sphinx for building documents)
-	@pip install -U sphinx --break-system-packages
+ifeq (, $(shell which sphinx-build))
+	$(info Installing sphinx and doc dependencies)
+	@pip install -U "sphinx>=7,<7.2" numpydoc sphinx-click sphinxcontrib-bibtex sphinx-press-theme
 endif
 
 

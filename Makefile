@@ -46,31 +46,24 @@ test:
 # Other convenient utilities
 # --------------------------------------------------------------
 
-.PHONY: export
-export:
-	@echo "Exporting requirements.txt and setup.py"
-	@poetry export -f requirements.txt -o requirements.txt
-	@./scripts/create_setup.sh
-
 .PHONY: install
 install:
-	@./scripts/install.sh venv
+	@pip install --upgrade pip setuptools wheel
+	@pip install .
 
 .PHONY: install-dev
 install-dev:
-	@poetry config virtualenvs.create false
-	@poetry install
-	@./scripts/gdrive.sh https://drive.google.com/file/d/10i8z1zH60a2coKEst47lELdkvZUmgd1b/view?usp=sharing
-	@unzip resource.zip
-	@mv resource/* tests/resource
-	@rm -d resource
-	@rm resource.zip
+	@pip install --upgrade pip setuptools wheel
+	@pip install -e ".[dev]"
+
+.PHONY: docs
+docs:
+	@$(MAKE) -C docs html
 
 .PHONY: clean
 clean:
 	@rm -rf .venv/
-	@rm -rf ~/.cache/pypoetry/
-
+	@rm -rf docs/build/
 
 .PHONY: build-docker
 build-docker:
