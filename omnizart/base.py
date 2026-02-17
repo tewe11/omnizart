@@ -11,7 +11,14 @@ from abc import ABCMeta, abstractmethod
 
 import h5py
 import tensorflow as tf
-from tensorflow.keras.models import model_from_yaml
+try:
+    from tensorflow.keras.models import model_from_yaml
+except ImportError:
+    def model_from_yaml(*args, **kwargs):
+        raise NotImplementedError(
+            "model_from_yaml was removed in TensorFlow 2.12+. "
+            "Use tf.keras.models.load_model() with SavedModel or .keras format instead."
+        )
 
 from omnizart import MODULE_PATH
 from omnizart.utils import get_logger, ensure_path_exists, get_filename
@@ -62,7 +69,7 @@ class BaseTranscription(metaclass=ABCMeta):
 
         try:
             model = tf.keras.models.load_model(model_path, custom_objects=custom_objects)
-        except (OSError):
+        except (OSError, ValueError):
             raise FileNotFoundError(
                 f"Checkpoint file not found: {model_path}/variables/variables.data*. Perhaps not yet downloaded?\n"
                 "Try execute 'omnizart download-checkpoints'"
