@@ -7,9 +7,6 @@ RUN apt-get update && \
     libsndfile1 libgl1 ffmpeg vim fluidsynth build-essential && \
     rm -rf /var/lib/apt/lists/*
 
-# Set legacy Keras 2 mode for TF 2.16+
-ENV TF_USE_LEGACY_KERAS=1
-
 COPY omnizart ./omnizart
 COPY scripts ./scripts
 COPY pyproject.toml ./
