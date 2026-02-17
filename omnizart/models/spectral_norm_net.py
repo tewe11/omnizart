@@ -201,7 +201,7 @@ def cnn_attention(x, channels, scope='attention'):
         out = tf.reshape(attn_out_2, shape=[-1, ori_shape[1], ori_shape[2], ori_shape[3] // 2])
         out = conv_sa(out, channels, kernel=(1, 1), strides=(1, 1), scope='out_attn_conv')
 
-        gamma = tf.compat.v1.get_variable("gamma", [1], initializer=tf.constant_initializer(0.0))
+        gamma = tf.Variable(tf.constant_initializer(0.0)(shape=[1]), name="gamma")
         x_att = gamma*out + x  # noqa: E226
         x_gma = gamma * out
 

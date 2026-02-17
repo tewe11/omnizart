@@ -309,8 +309,8 @@ def chord_loss_func(
     loss_ct = lambda_loss_ct * tf.reduce_mean(input_tensor=exp_cc_logits)
 
     one_hot_chord = tf.one_hot(chord, depth=out_classes)  # pylint: disable=E1120
-    loss_c = lambda_loss_c * tf.compat.v1.losses.softmax_cross_entropy(
-        onehot_labels=one_hot_chord, logits=logits, label_smoothing=0.1
-    )
+    loss_c = lambda_loss_c * tf.keras.losses.CategoricalCrossentropy(
+        from_logits=True, label_smoothing=0.1
+    )(one_hot_chord, logits)
 
     return loss_ct + loss_c

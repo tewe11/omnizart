@@ -37,7 +37,7 @@ def cast_like(x, y):
             x_name = x.name
         except AttributeError:
             pass
-        tf.compat.v1.logging.warning("Cast for %s may induce copy from '%s' to '%s'", x_name, x.device, cast_x.device)
+        tf.get_logger().warning("Cast for %s may induce copy from '%s' to '%s'", x_name, x.device, cast_x.device)
     return cast_x
 
 
@@ -200,7 +200,7 @@ def embedding_to_padding(emb):
         embedding vector is all zero, and is 0 otherwise.
     """
     emb_sum = tf.reduce_sum(tf.abs(emb), axis=-1)
-    return tf.compat.v1.to_float(tf.equal(emb_sum, 0.0))
+    return tf.cast(tf.equal(emb_sum, 0.0), tf.float32)
 
 
 def scatter_blocks_2d(x, indices, shape):
@@ -263,7 +263,7 @@ def dropout_with_broadcast_dims(x, keep_prob, broadcast_dims=None, **kwargs):
         # Allow dimensions like "-1" as well.
         broadcast_dims = [dim + ndims if dim < 0 else dim for dim in broadcast_dims]
         kwargs["noise_shape"] = [1 if i in broadcast_dims else shape[i] for i in range(ndims)]
-    return tf.compat.v1.nn.dropout(x, keep_prob, **kwargs)
+    return tf.nn.dropout(x, rate=1.0 - keep_prob, **kwargs)
 
 
 def dot_product_attention(
@@ -316,7 +316,7 @@ def dot_product_attention(
     y
         Tensor with shape [..., length_q, depth_v].
   """
-    with tf.compat.v1.variable_scope(name, default_name="dot_product_attention", values=[q, k, v]) as scope:
+    with tf.name_scope(name or "dot_product_attention") as scope:
         logits = tf.matmul(q, k, transpose_b=True)  # [..., length_q, length_kv]
         if bias is not None:
             bias = cast_like(bias, logits)
@@ -326,8 +326,8 @@ def dot_product_attention(
         weights = tf.nn.softmax(logits, name="attention_weights")
         weights = cast_like(weights, q)
         if save_weights_to is not None:
-            save_weights_to[scope.name] = weights
-            save_weights_to[scope.name + "/logits"] = logits
+            save_weights_to[scope] = weights
+            save_weights_to[scope + "/logits"] = logits
         # Drop out attention links for each head.
         weights = dropout_with_broadcast_dims(weights, 1.0 - dropout_rate, broadcast_dims=dropout_broadcast_dims)
         return tf.matmul(weights, v)
@@ -364,7 +364,7 @@ def local_attention_2d(q, k, v, query_shape=(8, 16), memory_flange=(8, 16), name
     y
         A Tensor of shape [batch, heads, h, w, depth_v]
   """
-    with tf.compat.v1.variable_scope(name, default_name="local_self_attention_2d", values=[q, k, v]):
+    with tf.name_scope(name or "local_self_attention_2d"):
         v_shape = shape_list(v)
 
         # Pad query, key, value to ensure multiple of corresponding lengths.
@@ -385,7 +385,7 @@ def local_attention_2d(q, k, v, query_shape=(8, 16), memory_flange=(8, 16), name
         k_new = gather_blocks_2d(k, k_and_v_indices)
         v_new = gather_blocks_2d(v, k_and_v_indices)
 
-        attention_bias = tf.expand_dims(tf.compat.v1.to_float(embedding_to_padding(k_new)) * -1e9, axis=-2)
+        attention_bias = tf.expand_dims(tf.cast(embedding_to_padding(k_new), tf.float32) * -1e9, axis=-2)
         output = dot_product_attention(q_new, k_new, v_new, attention_bias, dropout_rate=0.0, name="local_2d")
         # Put representations back into original shapes.
         padded_q_shape = shape_list(q)

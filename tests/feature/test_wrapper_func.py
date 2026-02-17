@@ -1,7 +1,12 @@
+import os
+
 import h5py
 import numpy as np
+import pytest
 
 from omnizart.feature import wrapper_func as wfunc
+
+RESOURCE_PATH = os.path.join(os.path.dirname(__file__), "..", "resource", "sample_feature.hdf")
 
 
 def test_get_frame_by_time():
@@ -10,8 +15,9 @@ def test_get_frame_by_time():
     assert wfunc.get_frame_by_time(2, 16000, 128) == 250
 
 
+@pytest.mark.skipif(not os.path.exists(RESOURCE_PATH), reason="sample_feature.hdf not available")
 def test_extract_patch_cqt(mocker):
-    with h5py.File("./tests/resource/sample_feature.hdf", "r") as fin:
+    with h5py.File(RESOURCE_PATH, "r") as fin:
         mini_beat_arr = fin["mini_beat_arr"][:]
         cqt = fin["cqt"][:]
         patch_cqt = fin["patch_cqt"][:]

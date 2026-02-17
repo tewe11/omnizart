@@ -10,5 +10,5 @@ def silence_tensorflow():
     only, and not in omnizart API files.
     """
     # pylint: disable=E0401,C0415
-    from tensorflow.compat.v1 import logging as tf_logger
-    tf_logger.set_verbosity(tf_logger.ERROR)
+    import tensorflow as tf
+    tf.get_logger().setLevel('ERROR')

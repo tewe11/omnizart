@@ -2,10 +2,8 @@
 import os
 import abc
 
-import six
 import numpy as np
 import tensorflow as tf
-from tensorflow.python.keras.utils import tf_utils
 
 from omnizart.io import write_yaml
 from omnizart.utils import get_logger, ensure_path_exists
@@ -212,7 +210,7 @@ class TFModelCheckpoint(tf.keras.callbacks.ModelCheckpoint):
 
         if isinstance(self.save_freq, int) or self.epochs_since_last_save >= self.period:
             # Block only when saving interval is reached.
-            logs = tf_utils.to_numpy_or_python_type(logs)
+            logs = {k: v.numpy() if hasattr(v, 'numpy') else v for k, v in logs.items()}
             self.epochs_since_last_save = 0
             filepath = self._get_file_path(epoch, logs)
 
@@ -250,6 +248,6 @@ class TFModelCheckpoint(tf.keras.callbacks.ModelCheckpoint):
                 self._maybe_remove_file()
             except IOError as e:
                 # `e.errno` appears to be `None` so checking the content of `e.args[0]`.
-                if 'is a directory' in six.ensure_str(e.args[0]).lower():
+                if 'is a directory' in str(e.args[0]).lower():
                     raise IOError(f'Please specify a non-directory filepath for ModelCheckpoint. \
                         Filepath used is an existing directory: {filepath}')

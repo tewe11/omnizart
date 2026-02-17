@@ -1,6 +1,5 @@
 # pylint: disable=W0102,W0221
 import tensorflow as tf
-from tensorflow.python.framework import ops
 
 from omnizart.models.t2t import positional_encoding, MultiHeadAttention
 from omnizart.models.utils import shape_list
@@ -219,14 +218,17 @@ def chord_block_decompression(compressed_seq, block_ids):
 
 
 def binary_round(inp, cast_to_int=False):
-    graph = tf.compat.v1.get_default_graph()
-    with ops.name_scope("BinaryRound") as name:
+    @tf.custom_gradient
+    def _round_with_identity_grad(x):
+        def grad(dy):
+            return dy
+        return tf.round(x), grad
+
+    with tf.name_scope("BinaryRound"):
+        rounded = _round_with_identity_grad(inp)
         if cast_to_int:
-            with graph.gradient_override_map({"Round": "Identity", "Cast": "Identity"}):
-                return tf.cast(tf.round(inp), tf.int32, name=name)
-        else:
-            with graph.gradient_override_map({"Round": "Identity"}):
-                return tf.round(inp, name=name)
+            return tf.cast(rounded, tf.int32)
+        return rounded
 
 
 class Encoder(tf.keras.layers.Layer):
