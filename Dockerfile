@@ -4,7 +4,7 @@ WORKDIR /tmp
 
 RUN apt-get update && \
     apt-get install --assume-yes --no-install-recommends \
-    libsndfile1 libgl1 ffmpeg vim fluidsynth build-essential && \
+    libsndfile1 libgl1 ffmpeg vim fluidsynth build-essential git && \
     rm -rf /var/lib/apt/lists/*
 
 COPY omnizart ./omnizart
