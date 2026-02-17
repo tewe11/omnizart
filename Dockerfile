@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /tmp
 
@@ -31,7 +31,7 @@ RUN pip install --no-cache-dir click pretty_midi librosa pillow pyyaml \
 #    but all real runtime deps (numpy, pandas, etc.) are installed here.
 RUN pip install --no-cache-dir pandas norbert "ffmpeg-python>=0.2.0" \
     "httpx[http2]" typer && \
-    pip install --no-cache-dir spleeter==2.3.2 --no-deps
+    pip install --no-cache-dir --no-deps "spleeter @ git+https://github.com/deezer/spleeter.git@2786e37"
 
 # 5. Install omnizart itself (--no-deps: all deps already installed above)
 RUN pip install --no-cache-dir poetry-core && \

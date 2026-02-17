@@ -38,9 +38,6 @@ mir_eval = ">=0.6"
 tensorflow = ">=2.16"
 tf-keras = ">=2.16"
 
-[tool.poetry.extras]
-spleeter = ["spleeter"]
-
 [tool.poetry.dev-dependencies]
 pytest = ">=7.0"
 flake8 = ">=5.0"

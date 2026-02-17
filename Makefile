@@ -1,4 +1,5 @@
 CHECK_SRC := ./omnizart
+SPLEETER_GIT := git+https://github.com/deezer/spleeter.git@2786e37
 
 
 .PHONY: all
@@ -49,12 +50,20 @@ test:
 .PHONY: install
 install:
 	@pip install --upgrade pip setuptools wheel
+	@pip install Cython numpy scipy numba
+	@pip install madmom vamp --no-build-isolation
 	@pip install .
+	@pip install pandas norbert "ffmpeg-python>=0.2.0" "httpx[http2]" typer
+	@pip install --no-deps "spleeter @ $(SPLEETER_GIT)"
 
 .PHONY: install-dev
 install-dev:
 	@pip install --upgrade pip setuptools wheel
-	@pip install -e ".[dev]"
+	@pip install Cython numpy scipy numba
+	@pip install madmom vamp --no-build-isolation
+	@pip install -e .
+	@pip install pandas norbert "ffmpeg-python>=0.2.0" "httpx[http2]" typer
+	@pip install --no-deps "spleeter @ $(SPLEETER_GIT)"
 
 .PHONY: docs
 docs:
