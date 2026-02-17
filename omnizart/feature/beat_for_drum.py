@@ -5,13 +5,25 @@ from concurrent.futures import ProcessPoolExecutor
 
 import scipy
 import numpy as np
-from madmom.features import (
+
+# madmom 0.16.1 uses np.float, np.int, etc. which were removed in NumPy 1.24+.
+# Temporarily restore them so the import succeeds.
+_np_aliases = {}
+for _alias, _target in [("float", np.float64), ("int", np.int_), ("complex", np.complex128), ("bool", np.bool_)]:
+    if not hasattr(np, _alias):
+        _np_aliases[_alias] = _target
+        setattr(np, _alias, _target)
+
+from madmom.features import (  # noqa: E402
     DBNDownBeatTrackingProcessor,
     RNNDownBeatProcessor,
     DBNBeatTrackingProcessor,
     RNNBeatProcessor,
     BeatTrackingProcessor,
 )
+
+for _alias in _np_aliases:
+    delattr(np, _alias)
 
 from omnizart.io import load_audio
 from omnizart.utils import get_logger
